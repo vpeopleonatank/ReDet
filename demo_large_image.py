@@ -4,6 +4,7 @@ import mmcv
 import numpy as np
 import os
 import pdb
+import argparse
 from mmcv import Config
 from tqdm import tqdm
 
@@ -80,7 +81,8 @@ def py_cpu_nms_poly_fast_np(dets, thresh):
 class DetectorModel():
     def __init__(self,
                  config_file,
-                 checkpoint_file):
+                 checkpoint_file,
+                 specified_class=None):
         # init RoITransformer
         self.config_file = config_file
         self.checkpoint_file = checkpoint_file
@@ -89,6 +91,7 @@ class DetectorModel():
         self.dataset = get_dataset(self.data_test)
         self.classnames = self.dataset.CLASSES
         self.model = init_detector(config_file, checkpoint_file, device='cuda:0')
+        self.specified_class = specified_class
 
     def inference_single(self, imagname, slide_size, chip_size):
         img = mmcv.imread(imagname)
@@ -110,6 +113,9 @@ class DetectorModel():
 
                 # print('result: ', result)
                 for cls_id, name in enumerate(self.classnames):
+                    if self.specified_class is not None and name not in self.specified_class:
+                        continue
+
                     chip_detections[cls_id][:, :8][:, ::2] = chip_detections[cls_id][:, :8][:, ::2] + i * slide_w
                     chip_detections[cls_id][:, :8][:, 1::2] = chip_detections[cls_id][:, :8][:, 1::2] + j * slide_h
                     # import pdb;pdb.set_trace()
@@ -131,16 +137,51 @@ class DetectorModel():
         cv2.imwrite(dstpath, img)
 
 
-if __name__ == '__main__':
-    model = DetectorModel(
-        r"configs/ReDet/ReDet_re50_refpn_1x_dota15_ms.py",
-        r"work_dirs/ReDet_re50_refpn_1x_dota15_ms/ReDet_re50_refpn_1x_dota15_ms-9d1a523c.pth")
+# if __name__ == '__main__':
+#     model = DetectorModel(
+#         r"configs/ReDet/ReDet_re50_refpn_1x_dota15_ms.py",
+#         r"work_dirs/ReDet_re50_refpn_1x_dota15_ms/ReDet_re50_refpn_1x_dota15_ms-9d1a523c.pth")
 
-    img_dir = "your_path_to_img_dir"
-    out_dir = 'your_path_to_save_results'
-    img_names = os.listdir(img_dir)
-    for img_name in img_names:
-        print(img_name)
-        img_path = os.path.join(img_dir, img_name)
-        out_path = os.path.join(out_dir, img_name)
-        model.inference_single_vis(img_path, out_path, (1024, 1024), (3072, 3072))
+#     img_dir = "your_path_to_img_dir"
+#     out_dir = 'your_path_to_save_results'
+#     img_names = os.listdir(img_dir)
+#     for img_name in img_names:
+#         print(img_name)
+#         img_path = os.path.join(img_dir, img_name)
+#         out_path = os.path.join(out_dir, img_name)
+#         model.inference_single_vis(img_path, out_path, (1024, 1024), (3072, 3072))
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='MMDet predict large images')
+    parser.add_argument('--config-file', help='config file', type=str,
+            default=r'configs/DOTA/faster_rcnn_RoITrans_r50_fpn_1x_shipdata.py')
+    parser.add_argument('--checkpoint-path', help='checkpoint path', type=str,
+            default=r'work_dirs/mask_rcnn_r50_fpn_1x_dota1_epoch_12.pth')
+    parser.add_argument('--image-path', help='predict image', type=str,
+            default=r'data/ship_1024/test1024/images/20190308_060133_ssc10_u0001[DL].png')
+    parser.add_argument('--out-path', type=str,
+            default=r'demo/20190308_060133_ssc10_u0001[DL].png')
+    parser.add_argument('--specified-class', nargs='+',
+            default=None)
+    parser.add_argument('--predict-folder', default=False, action='store_true')
+    args = parser.parse_args()
+    return args
+
+if __name__ == '__main__':
+    args = parse_args()
+    model = DetectorModel(args.config_file,
+                  args.checkpoint_path, args.specified_class)
+
+    if args.predict_folder:
+        os.makedirs(args.out_path, exist_ok=True)
+        for image_path in os.listdir(args.image_path):
+            model.inference_single_vis(os.path.join(args.image_path, image_path),
+                                            os.path.join(args.out_path, image_path),
+                                            (512, 512),
+                                            (1024, 1024))
+    else:
+        model.inference_single_vis(args.image_path,
+                                        args.out_path,
+                                        (512, 512),
+                                        (1024, 1024))
