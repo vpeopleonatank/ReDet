@@ -1,7 +1,7 @@
 # model settings
 model = dict(
     type='ReDet',
-    pretrained='work_dirs/ReResNet_pretrain/re_resnet50_c8_batch256-12933bc2.pth',
+    pretrained='work_dirs/re_resnet50_c8_batch256-25b16846.pth',
     backbone=dict(
         type='ReResNet',
         depth=50,
@@ -206,8 +206,8 @@ log_config = dict(
 total_epochs = 40
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = 'work_dirs/ReDet_re50_refpn_1x_dota1_ms'
-load_from = None
+work_dir = 'work_dirs/ReDet_re50_refpn_1x_dota1_ms-ba948633.pth'
+load_from =  'work_dirs/'
 resume_from = None
 workflow = [('train', 1)]
 
