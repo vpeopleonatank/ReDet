@@ -133,7 +133,7 @@ class DetectorModel():
     def inference_single_vis(self, srcpath, dstpath, slide_size, chip_size):
         detections = self.inference_single(srcpath, slide_size, chip_size)
         img = draw_poly_detections(srcpath, detections, self.classnames, scale=1, threshold=0.2,
-                                   colormap=dota15_colormap)
+                                   colormap=dota15_colormap, putText=True)
         cv2.imwrite(dstpath, img)
 
 
@@ -178,8 +178,8 @@ if __name__ == '__main__':
         for image_path in os.listdir(args.image_path):
             model.inference_single_vis(os.path.join(args.image_path, image_path),
                                             os.path.join(args.out_path, image_path),
-                                            (512, 512),
-                                            (1024, 1024))
+                                            (1024, 1024),
+                                            (3072, 3072))
     else:
         model.inference_single_vis(args.image_path,
                                         args.out_path,
