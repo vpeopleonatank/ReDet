@@ -139,7 +139,7 @@ data_root = '/content/drive/MyDrive/DeepLearning/Projects/ShipDetection/AerialDe
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 data = dict(
-    imgs_per_gpu=4,
+    imgs_per_gpu=2,
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
@@ -203,7 +203,7 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 40
+total_epochs = 50
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = 'work_dirs/ReDet_re50_refpn_1x_shipdata_ms'
